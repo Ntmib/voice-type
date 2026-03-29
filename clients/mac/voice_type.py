@@ -6,7 +6,7 @@ Voice-Type Mac Client
     python voice_type.py
 
 Переменные окружения:
-    VOICETYPE_URL    — URL API (default: http://localhost:8000)
+    VOICETYPE_URL    — URL API (default: http://YOUR_VPS_IP)
     VOICETYPE_TOKEN  — токен авторизации
 """
 
@@ -20,7 +20,7 @@ except ImportError:
     print("pip install pyaudio requests pyperclip pynput")
     sys.exit(1)
 
-API_URL = os.environ.get("VOICETYPE_URL", "http://localhost:8000")
+API_URL = os.environ.get("VOICETYPE_URL", "http://YOUR_VPS_IP")
 API_TOKEN = os.environ.get("VOICETYPE_TOKEN", "")
 HOTKEY_STR = os.environ.get("VOICETYPE_HOTKEY", "<ctrl>+<shift>+space")
 
