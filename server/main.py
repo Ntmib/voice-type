@@ -35,6 +35,7 @@ async def _do_transcribe(audio_data: bytes, content_type: str, authorization: st
         "language": "ru",
         "smart_format": "true",
         "punctuate": "true",
+        "paragraphs": "true",
     }
 
     async with httpx.AsyncClient(timeout=60.0) as client:
