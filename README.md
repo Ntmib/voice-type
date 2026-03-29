@@ -1,40 +1,52 @@
 # Voice-Type
 
-Голосовой ввод текста в любое приложение. Нажал → сказал → текст вставлен.
+Универсальный голосовой ввод текста — работает в любом приложении на iPhone и Mac.
 
-## Архитектура
+Нажал кнопку → сказал → текст в буфере обмена → вставил куда нужно.
+
+## Как работает
 
 ```
-[Клиент] → аудио → [API сервер] → Deepgram Nova-2 → текст → [Клиент] → вставка
+[iPhone / Mac] → аудио → [VPS API] → Deepgram Nova-2 → текст → clipboard
 ```
 
-## Компоненты
+- **Сервер**: FastAPI на VPS, принимает аудио, отправляет в Deepgram, возвращает текст
+- **Mac-клиент**: Python-скрипт с горячей клавишей (правый Command). Зажал → диктуешь → отпустил → текст в буфере
+- **iPhone**: Apple Shortcuts — нажал → записал → текст скопирован
 
-- `server/` — FastAPI backend (Deepgram transcription)
-- `clients/mac/` — Desktop клиент (горячая клавиша)
-- `clients/ios/` — Инструкция для Apple Shortcuts
+## Структура
 
-## Быстрый старт
-
-### Сервер
-```bash
-cd server
-pip install -r requirements.txt
-export DEEPGRAM_API_KEY="your-key"
-export VOICETYPE_TOKEN="your-secret-token"
-uvicorn main:app --host 0.0.0.0 --port 8100
+```
+server/          — API сервер (FastAPI + Deepgram Nova-2)
+clients/mac/     — Mac-клиент (pynput + pyaudio)
+clients/ios/     — Инструкция для Apple Shortcuts
+SPEC.md          — Полная спецификация проекта
 ```
 
-### Mac клиент
-```bash
-cd clients/mac
-pip install -r requirements.txt
-export VOICETYPE_URL="https://your-vps:8100"
-export VOICETYPE_TOKEN="your-secret-token"
-python voice_type.py
-```
+## Стек
 
-## Безопасность
-- API защищён токеном (VOICETYPE_TOKEN)
-- HTTPS через nginx reverse proxy
-- Лимит файла: 25MB
+- **API**: Python, FastAPI, uvicorn
+- **Транскрибация**: Deepgram Nova-2 (русский, smart_format, пунктуация)
+- **Mac**: pynput (горячая клавиша), pyaudio (запись), pyperclip (буфер)
+- **iPhone**: Apple Shortcuts (Record Audio → POST → Copy)
+- **VPS**: systemd + nginx reverse proxy
+- **Безопасность**: Bearer-токен, лимит 25MB
+
+## Деплой
+
+Сервер работает на VPS (systemd service `voice-type.service`, порт 8100, nginx proxy на 80).
+
+### Mac — запуск
+
+Двойной клик по `VoiceType.command` на рабочем столе:
+- Зажать правый Command → диктовать
+- Отпустить → звук Glass = текст в буфере
+- Cmd+V для вставки
+
+### iPhone — настройка
+
+Через приложение "Команды" (Shortcuts):
+1. Record Audio
+2. POST на API с Bearer-токеном
+3. Получить значение "text" из ответа
+4. Copy to Clipboard
