@@ -1,13 +1,6 @@
 """
 Voice-Type Mac Client
 Горячая клавиша -> запись -> транскрибация -> вставка текста.
-
-Использование:
-    python voice_type.py
-
-Переменные окружения:
-    VOICETYPE_URL    — URL API (default: http://YOUR_VPS_IP)
-    VOICETYPE_TOKEN  — токен авторизации
 """
 
 import os, io, sys, wave, threading, time
@@ -22,7 +15,9 @@ except ImportError:
 
 API_URL = os.environ.get("VOICETYPE_URL", "http://YOUR_VPS_IP")
 API_TOKEN = os.environ.get("VOICETYPE_TOKEN", "")
-HOTKEY_STR = os.environ.get("VOICETYPE_HOTKEY", "<ctrl>+<shift>+space")
+
+# Клавиша для записи (зажми -> говори -> отпусти)
+TRIGGER_KEY = Key.f5
 
 RATE, CHANNELS, CHUNK = 16000, 1, 1024
 FORMAT = pyaudio.paInt16
@@ -42,7 +37,7 @@ def start_recording():
     audio_frames = []
     stream = pa.open(format=FORMAT, channels=CHANNELS, rate=RATE,
                      input=True, frames_per_buffer=CHUNK)
-    print("\U0001f399 Запись...")
+    print("🎙 Запись...")
 
     def _capture():
         while recording:
@@ -104,20 +99,18 @@ def stop_and_transcribe():
 
 
 def main():
-    print(f"Voice-Type | API: {API_URL}")
-    print(f"Горячая клавиша: {HOTKEY_STR}")
-    print("Зажми -> говори -> отпусти -> текст вставится\n")
-
-    hotkey = keyboard.HotKey(keyboard.HotKey.parse(HOTKEY_STR), start_recording)
+    print("Voice-Type")
+    print(f"API: {API_URL}")
+    print(f"Клавиша: F5")
+    print("Зажми F5 -> говори -> отпусти F5 -> текст вставится")
+    print()
 
     def on_press(key):
-        try: hotkey.press(key)
-        except: pass
+        if key == TRIGGER_KEY:
+            start_recording()
 
     def on_release(key):
-        try: hotkey.release(key)
-        except: pass
-        if recording:
+        if key == TRIGGER_KEY:
             stop_and_transcribe()
 
     with keyboard.Listener(on_press=on_press, on_release=on_release) as l:

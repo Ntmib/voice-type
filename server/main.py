@@ -1,7 +1,7 @@
 """Voice-Type API — voice-to-text transcription endpoint."""
 
 import os
-from fastapi import FastAPI, UploadFile, File, Header, HTTPException
+from fastapi import FastAPI, UploadFile, File, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
@@ -19,22 +19,16 @@ DEEPGRAM_KEY = os.environ.get("DEEPGRAM_API_KEY", "")
 DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
 
 
-@app.post("/transcribe")
-async def transcribe(
-    file: UploadFile = File(...),
-    authorization: str = Header(default=""),
-):
+async def _do_transcribe(audio_data: bytes, content_type: str, authorization: str):
+    """Shared transcription logic."""
     if API_TOKEN and authorization != f"Bearer {API_TOKEN}":
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     if not DEEPGRAM_KEY:
         raise HTTPException(status_code=500, detail="Deepgram API key not configured")
 
-    audio_data = await file.read()
     if len(audio_data) > 25 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large (max 25MB)")
-
-    content_type = file.content_type or "audio/wav"
 
     params = {
         "model": "nova-2",
@@ -66,6 +60,26 @@ async def transcribe(
     )
 
     return {"text": transcript}
+
+
+@app.post("/transcribe")
+async def transcribe(
+    request: Request,
+    file: UploadFile = File(None),
+    authorization: str = Header(default=""),
+):
+    """Accept audio as multipart form OR raw body."""
+    if file:
+        audio_data = await file.read()
+        content_type = file.content_type or "audio/wav"
+    else:
+        audio_data = await request.body()
+        content_type = request.headers.get("content-type", "audio/m4a")
+
+    if not audio_data:
+        raise HTTPException(status_code=400, detail="No audio data")
+
+    return await _do_transcribe(audio_data, content_type, authorization)
 
 
 @app.get("/health")
