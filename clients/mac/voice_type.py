@@ -28,23 +28,29 @@ stream = None
 
 
 def beep(sound_name="Tink"):
-    """Системный звук Mac для обратной связи."""
     subprocess.Popen(
         ["afplay", f"/System/Library/Sounds/{sound_name}.aiff"],
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     )
 
 
-def paste_via_applescript():
-    """Вставка через AppleScript — работает везде."""
-    subprocess.run([
-        "osascript", "-e",
-        'tell application "System Events" to keystroke "v" using command down'
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def paste_text():
+    """Вставка: активируем текущее приложение и вставляем."""
+    script = '''
+    tell application "System Events"
+        set frontApp to name of first process whose frontmost is true
+    end tell
+    tell application frontApp to activate
+    delay 0.3
+    tell application "System Events"
+        keystroke "v" using command down
+    end tell
+    '''
+    subprocess.run(["osascript", "-e", script],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def notify(title, text):
-    """Уведомление macOS."""
     subprocess.run([
         "osascript", "-e",
         f'display notification "{text}" with title "{title}"'
@@ -118,8 +124,9 @@ def stop_and_transcribe():
     pyperclip.copy(text)
     print(f"OK: {text[:80]}...")
 
-    time.sleep(0.2)
-    paste_via_applescript()
+    time.sleep(0.5)
+    paste_text()
+    beep("Glass")
 
 
 def main():
@@ -127,8 +134,7 @@ def main():
     print(f"API: {API_URL}")
     print()
     print("Правый Command: зажми -> говори -> отпусти -> текст вставится")
-    print("Звук 'тинь' = запись началась")
-    print("Звук 'поп' = запись закончилась, отправка")
+    print("Звуки: тинь = запись, поп = отправка, стекло = вставлено")
     print()
 
     def on_press(key):
