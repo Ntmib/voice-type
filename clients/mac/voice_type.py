@@ -17,7 +17,7 @@ API_URL = os.environ.get("VOICETYPE_URL", "http://YOUR_VPS_IP")
 API_TOKEN = os.environ.get("VOICETYPE_TOKEN", "")
 
 # Клавиша для записи (зажми -> говори -> отпусти)
-TRIGGER_KEY = Key.f5
+TRIGGER_KEY = Key.f6
 
 RATE, CHANNELS, CHUNK = 16000, 1, 1024
 FORMAT = pyaudio.paInt16
@@ -101,8 +101,8 @@ def stop_and_transcribe():
 def main():
     print("Voice-Type")
     print(f"API: {API_URL}")
-    print(f"Клавиша: F5")
-    print("Зажми F5 -> говори -> отпусти F5 -> текст вставится")
+    print(f"Клавиша: F6")
+    print("Зажми F6 -> говори -> отпусти F5 -> текст вставится")
     print()
 
     def on_press(key):
