@@ -4,3 +4,10 @@ __pycache__/
 venv/
 .venv/
 *.egg-info/
+
+# локальная память проекта (репозиторий публичный — память не коммитим)
+MEMORY.md
+memory/
+knowledge/
+instructions/
+_progress.md
