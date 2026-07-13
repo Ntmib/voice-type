@@ -6,13 +6,18 @@
     <string>com.voicetype.agent</string>
     <!-- Шаблон. install.sh подставляет реальный путь вместо __CLIENT_DIR__
          и кладёт готовый файл в ~/Library/LaunchAgents/.
-         Токен живёт в .env рядом со скриптом (не в этом файле!). -->
+         Токен живёт в .env рядом со скриптом (не в этом файле!).
+         Python запускается НАПРЯМУЮ, без bash: разрешения macOS (Мониторинг
+         ввода, Микрофон) привязываются к ответственному процессу службы —
+         с bash-обёрткой ими владел бы bash, а не Python. -->
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>-c</string>
-        <string>cd "__CLIENT_DIR__" &amp;&amp; source venv/bin/activate &amp;&amp; set -a &amp;&amp; source .env &amp;&amp; set +a &amp;&amp; exec python3 -u voice_type.py</string>
+        <string>__CLIENT_DIR__/venv/bin/python3</string>
+        <string>-u</string>
+        <string>__CLIENT_DIR__/voice_type.py</string>
     </array>
+    <key>WorkingDirectory</key>
+    <string>__CLIENT_DIR__</string>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
