@@ -31,6 +31,21 @@ if [ ! -d venv ]; then
 fi
 ./venv/bin/pip install -q -r requirements.txt
 
+# Мини-приложение VoiceType.app: macOS 26 не признаёт разрешения (Мониторинг
+# ввода, Универсальный доступ) за голым интерпретатором под launchd — TCC
+# выдаёт их только настоящему .app. Applet запускает python как дочерний
+# процесс, и тот наследует разрешения приложения.
+rm -rf "$APP_DIR/VoiceType.app"
+osacompile -o "$APP_DIR/VoiceType.app" - <<EOF
+do shell script "cd " & quoted form of "$APP_DIR" & " && exec ./venv/bin/python3 -u voice_type.py"
+EOF
+INFO="$APP_DIR/VoiceType.app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName VoiceType" "$INFO"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.voicetype.client" "$INFO"
+/usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$INFO" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'Запись голоса для транскрибации'" "$INFO" 2>/dev/null || true
+codesign --force --deep -s - "$APP_DIR/VoiceType.app"
+
 # Собираем plist из шаблона: подставляем путь установки
 mkdir -p "$HOME/Library/LaunchAgents"
 sed "s|__CLIENT_DIR__|$APP_DIR|g" "$SRC_DIR/$PLIST_LABEL.plist" > "$PLIST_DST"
