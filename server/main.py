@@ -22,6 +22,8 @@ DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
 # поэтому текст добивает маленькая LLM через OpenRouter. Ключа нет / не
 # ответила вовремя — молча возвращаем сырой текст, диктовка не теряется.
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+# OpenRouter блокирует запросы с РФ-IP — ходим через прокси, если задан
+OPENROUTER_PROXY = os.environ.get("OPENROUTER_PROXY", "") or None
 FORMAT_MODEL = os.environ.get("VOICETYPE_FORMAT_MODEL", "anthropic/claude-haiku-4.5")
 FORMAT_PROMPT = (
     "Ты корректор диктовки. Расставь в тексте знаки препинания и заглавные "
@@ -34,7 +36,7 @@ async def _restore_punctuation(text: str) -> str:
     if not OPENROUTER_KEY or not text.strip():
         return text
     try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
+        async with httpx.AsyncClient(timeout=8.0, proxy=OPENROUTER_PROXY) as client:
             resp = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {OPENROUTER_KEY}"},
