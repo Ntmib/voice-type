@@ -1,30 +1,35 @@
 #!/bin/bash
 # Voice-Type Mac: установка в один шаг.
-# Ставит зависимости в venv, собирает launchd-агент из шаблона и запускает его.
+# Копирует клиент в ~/Library/Application Support/VoiceType (launchd-агентам
+# запрещён доступ к ~/Documents — TCC), ставит venv и включает автозапуск.
 set -euo pipefail
 
-CLIENT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_DIR="$HOME/Library/Application Support/VoiceType"
 PLIST_LABEL="com.voicetype.agent"
 PLIST_DST="$HOME/Library/LaunchAgents/$PLIST_LABEL.plist"
 
-cd "$CLIENT_DIR"
-
-if [ ! -f .env ]; then
+if [ ! -f "$SRC_DIR/.env" ]; then
     echo "Нет файла .env — создай его рядом со скриптом:"
     echo "  VOICETYPE_TOKEN=<токен>"
     echo "  VOICETYPE_URL=http://YOUR_VPS_IP   # опционально"
     exit 1
 fi
-chmod 600 .env
 
+mkdir -p "$APP_DIR"
+cp "$SRC_DIR/voice_type.py" "$SRC_DIR/overlay.py" "$SRC_DIR/requirements.txt" "$APP_DIR/"
+cp "$SRC_DIR/.env" "$APP_DIR/.env"
+chmod 600 "$APP_DIR/.env"
+
+cd "$APP_DIR"
 if [ ! -d venv ]; then
     python3 -m venv venv
 fi
 ./venv/bin/pip install -q -r requirements.txt
 
-# Собираем plist из шаблона: подставляем реальный путь к клиенту
+# Собираем plist из шаблона: подставляем путь установки
 mkdir -p "$HOME/Library/LaunchAgents"
-sed "s|__CLIENT_DIR__|$CLIENT_DIR|g" "$PLIST_LABEL.plist" > "$PLIST_DST"
+sed "s|__CLIENT_DIR__|$APP_DIR|g" "$SRC_DIR/$PLIST_LABEL.plist" > "$PLIST_DST"
 
 # Перезапуск агента (bootout молча падает, если агент ещё не был загружен)
 launchctl bootout "gui/$(id -u)/$PLIST_LABEL" 2>/dev/null || true
@@ -32,8 +37,8 @@ launchctl bootstrap "gui/$(id -u)" "$PLIST_DST"
 
 sleep 2
 if launchctl print "gui/$(id -u)/$PLIST_LABEL" | grep -q "state = running"; then
-    echo "✓ Voice-Type запущен. Зажми правый Cmd и говори."
-    echo "  Лог: /tmp/voicetype.log"
+    echo "✓ Voice-Type запущен из $APP_DIR"
+    echo "  Зажми правый Cmd и говори. Лог: /tmp/voicetype.log"
 else
     echo "✗ Агент не запустился, смотри /tmp/voicetype.log"
     exit 1
