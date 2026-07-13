@@ -10,9 +10,9 @@ PLIST_LABEL="com.voicetype.agent"
 PLIST_DST="$HOME/Library/LaunchAgents/$PLIST_LABEL.plist"
 
 if [ ! -f "$SRC_DIR/.env" ]; then
-    echo "Нет файла .env — создай его рядом со скриптом:"
+    echo "Нет файла .env — скопируй .env.example в .env и заполни:"
+    echo "  VOICETYPE_URL=http://<адрес-твоего-сервера>"
     echo "  VOICETYPE_TOKEN=<токен>"
-    echo "  VOICETYPE_URL=http://YOUR_VPS_IP   # опционально"
     exit 1
 fi
 
