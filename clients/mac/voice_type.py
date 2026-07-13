@@ -201,6 +201,17 @@ def main():
     print("Пилюля внизу экрана показывает запись и результат")
     print()
 
+    # Диагностика и запрос разрешений: под launchd разрешения привязаны к
+    # самому бинарю Python, поэтому просим их официальным системным диалогом.
+    try:
+        import Quartz
+        listen_ok = bool(Quartz.CGPreflightListenEventAccess())
+        print(f"Input Monitoring: {'OK' if listen_ok else 'НЕТ'}")
+        if not listen_ok:
+            Quartz.CGRequestListenEventAccess()  # системный диалог разрешения
+    except Exception as e:
+        print(f"Не удалось проверить разрешения: {e}")
+
     overlay.setup_app()
 
     if "--demo" in sys.argv:
