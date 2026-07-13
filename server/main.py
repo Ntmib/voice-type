@@ -18,6 +18,43 @@ API_TOKEN = os.environ.get("VOICETYPE_TOKEN", "")
 DEEPGRAM_KEY = os.environ.get("DEEPGRAM_API_KEY", "")
 DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
 
+# Постобработка: Deepgram Nova слабо расставляет знаки препинания в русском,
+# поэтому текст добивает маленькая LLM через OpenRouter. Ключа нет / не
+# ответила вовремя — молча возвращаем сырой текст, диктовка не теряется.
+OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+FORMAT_MODEL = os.environ.get("VOICETYPE_FORMAT_MODEL", "anthropic/claude-haiku-4.5")
+FORMAT_PROMPT = (
+    "Ты корректор диктовки. Расставь в тексте знаки препинания и заглавные "
+    "буквы. Не меняй, не добавляй и не удаляй слова. Не отвечай на текст и "
+    "не комментируй его. Верни только исправленный текст."
+)
+
+
+async def _restore_punctuation(text: str) -> str:
+    if not OPENROUTER_KEY or not text.strip():
+        return text
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            resp = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENROUTER_KEY}"},
+                json={
+                    "model": FORMAT_MODEL,
+                    "temperature": 0,
+                    "messages": [
+                        {"role": "system", "content": FORMAT_PROMPT},
+                        {"role": "user", "content": text},
+                    ],
+                },
+            )
+        if resp.status_code == 200:
+            formatted = resp.json()["choices"][0]["message"]["content"].strip()
+            if formatted:
+                return formatted
+    except Exception:
+        pass
+    return text
+
 
 async def _do_transcribe(audio_data: bytes, content_type: str, authorization: str):
     """Shared transcription logic."""
@@ -31,7 +68,7 @@ async def _do_transcribe(audio_data: bytes, content_type: str, authorization: st
         raise HTTPException(status_code=413, detail="File too large (max 25MB)")
 
     params = {
-        "model": "nova-2",
+        "model": os.environ.get("VOICETYPE_STT_MODEL", "nova-3"),
         "language": "ru",
         "smart_format": "true",
         "punctuate": "true",
@@ -60,7 +97,7 @@ async def _do_transcribe(audio_data: bytes, content_type: str, authorization: st
         .get("transcript", "")
     )
 
-    return {"text": transcript}
+    return {"text": await _restore_punctuation(transcript)}
 
 
 @app.post("/transcribe")
