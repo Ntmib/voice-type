@@ -26,6 +26,22 @@ except ImportError as e:
     print("pip install pyaudio requests pyperclip pynput pyobjc-framework-Cocoa")
     sys.exit(1)
 
+def _load_env():
+    """Подхватить .env рядом со скриптом: агент запускается без оболочки."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    os.environ.setdefault(key.strip(), value.strip())
+    except FileNotFoundError:
+        pass
+
+
+_load_env()
+
 API_URL = os.environ.get("VOICETYPE_URL", "http://YOUR_VPS_IP")
 API_TOKEN = os.environ.get("VOICETYPE_TOKEN", "")
 
