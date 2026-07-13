@@ -26,6 +26,16 @@ except ImportError as e:
     print("pip install pyaudio requests pyperclip pynput pyobjc-framework-Cocoa")
     sys.exit(1)
 
+def _log(message):
+    """print + дублирование в файл: applet-обёртка буферизует stdout."""
+    print(message)
+    try:
+        with open("/tmp/voicetype.log", "a") as f:
+            f.write(message + "\n")
+    except OSError:
+        pass
+
+
 def _load_env():
     """Подхватить .env рядом со скриптом: агент запускается без оболочки."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
@@ -224,16 +234,16 @@ def main():
         from ApplicationServices import AXIsProcessTrustedWithOptions
 
         listen_ok = bool(Quartz.CGPreflightListenEventAccess())
-        print(f"Input Monitoring: {'OK' if listen_ok else 'НЕТ'}")
+        _log(f"Input Monitoring: {'OK' if listen_ok else 'НЕТ'}")
         if not listen_ok:
             Quartz.CGRequestListenEventAccess()  # системный диалог разрешения
 
         # pynput нужен ещё и Универсальный доступ; True в опциях = показать
         # системный диалог, если разрешения нет
         ax_ok = bool(AXIsProcessTrustedWithOptions({"AXTrustedCheckOptionPrompt": True}))
-        print(f"Универсальный доступ: {'OK' if ax_ok else 'НЕТ'}")
+        _log(f"Универсальный доступ: {'OK' if ax_ok else 'НЕТ'}")
     except Exception as e:
-        print(f"Не удалось проверить разрешения: {e}")
+        _log(f"Не удалось проверить разрешения: {e}")
 
     overlay.setup_app()
 
