@@ -52,7 +52,7 @@ def _load_env():
 
 _load_env()
 
-API_URL = os.environ.get("VOICETYPE_URL", "http://YOUR_VPS_IP")
+API_URL = os.environ.get("VOICETYPE_URL", "")
 API_TOKEN = os.environ.get("VOICETYPE_TOKEN", "")
 
 TRIGGER_KEY = Key.cmd_r
@@ -220,6 +220,9 @@ def demo():
 
 
 def main():
+    if not API_URL:
+        _log("VOICETYPE_URL не задан — укажи адрес сервера в .env")
+        sys.exit(1)
     print("Voice-Type")
     print(f"API: {API_URL}")
     print()
