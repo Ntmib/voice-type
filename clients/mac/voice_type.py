@@ -221,10 +221,17 @@ def main():
     # самому бинарю Python, поэтому просим их официальным системным диалогом.
     try:
         import Quartz
+        from ApplicationServices import AXIsProcessTrustedWithOptions
+
         listen_ok = bool(Quartz.CGPreflightListenEventAccess())
         print(f"Input Monitoring: {'OK' if listen_ok else 'НЕТ'}")
         if not listen_ok:
             Quartz.CGRequestListenEventAccess()  # системный диалог разрешения
+
+        # pynput нужен ещё и Универсальный доступ; True в опциях = показать
+        # системный диалог, если разрешения нет
+        ax_ok = bool(AXIsProcessTrustedWithOptions({"AXTrustedCheckOptionPrompt": True}))
+        print(f"Универсальный доступ: {'OK' if ax_ok else 'НЕТ'}")
     except Exception as e:
         print(f"Не удалось проверить разрешения: {e}")
 
