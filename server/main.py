@@ -24,7 +24,12 @@ DEEPGRAM_URL = "https://api.deepgram.com/v1/listen"
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 # OpenRouter блокирует запросы с РФ-IP — ходим через прокси, если задан
 OPENROUTER_PROXY = os.environ.get("OPENROUTER_PROXY", "") or None
-FORMAT_MODEL = os.environ.get("VOICETYPE_FORMAT_MODEL", "anthropic/claude-haiku-4.5")
+FORMAT_MODEL = os.environ.get("VOICETYPE_FORMAT_MODEL", "google/gemini-2.5-flash-lite")
+
+# Постоянные соединения: новый TLS-handshake на каждую диктовку стоит
+# ~0.5-1.5с, переиспользуем клиентов на всё время жизни процесса
+_deepgram_client = httpx.AsyncClient(timeout=60.0)
+_openrouter_client = httpx.AsyncClient(timeout=8.0, proxy=OPENROUTER_PROXY)
 FORMAT_PROMPT = (
     "Ты корректор диктовки. Пользователь присылает расшифровку устной речи "
     "между маркерами <<< и >>>. Расставь в ней знаки препинания и заглавные "
@@ -51,19 +56,18 @@ async def _restore_punctuation(text: str) -> str:
     if not OPENROUTER_KEY or not text.strip():
         return text
     try:
-        async with httpx.AsyncClient(timeout=8.0, proxy=OPENROUTER_PROXY) as client:
-            resp = await client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={"Authorization": f"Bearer {OPENROUTER_KEY}"},
-                json={
-                    "model": FORMAT_MODEL,
-                    "temperature": 0,
-                    "messages": [
-                        {"role": "system", "content": FORMAT_PROMPT},
-                        {"role": "user", "content": f"<<<\n{text}\n>>>"},
-                    ],
-                },
-            )
+        resp = await _openrouter_client.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={"Authorization": f"Bearer {OPENROUTER_KEY}"},
+            json={
+                "model": FORMAT_MODEL,
+                "temperature": 0,
+                "messages": [
+                    {"role": "system", "content": FORMAT_PROMPT},
+                    {"role": "user", "content": f"<<<\n{text}\n>>>"},
+                ],
+            },
+        )
         if resp.status_code == 200:
             formatted = resp.json()["choices"][0]["message"]["content"].strip()
             formatted = formatted.strip("<>").strip()
@@ -93,16 +97,15 @@ async def _do_transcribe(audio_data: bytes, content_type: str, authorization: st
         "paragraphs": "true",
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        resp = await client.post(
-            DEEPGRAM_URL,
-            params=params,
-            headers={
-                "Authorization": f"Token {DEEPGRAM_KEY}",
-                "Content-Type": content_type,
-            },
-            content=audio_data,
-        )
+    resp = await _deepgram_client.post(
+        DEEPGRAM_URL,
+        params=params,
+        headers={
+            "Authorization": f"Token {DEEPGRAM_KEY}",
+            "Content-Type": content_type,
+        },
+        content=audio_data,
+    )
 
     if resp.status_code != 200:
         raise HTTPException(status_code=502, detail=f"Deepgram error: {resp.status_code}")
