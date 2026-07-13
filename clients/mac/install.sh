@@ -21,9 +21,13 @@ cp "$SRC_DIR/voice_type.py" "$SRC_DIR/overlay.py" "$SRC_DIR/requirements.txt" "$
 cp "$SRC_DIR/.env" "$APP_DIR/.env"
 chmod 600 "$APP_DIR/.env"
 
+# brew-питоны на этом Mac ломаются на ensurepip — берём python.org 3.13, если есть
+PYTHON="/Library/Frameworks/Python.framework/Versions/3.13/bin/python3"
+[ -x "$PYTHON" ] || PYTHON="python3"
+
 cd "$APP_DIR"
 if [ ! -d venv ]; then
-    python3 -m venv venv
+    "$PYTHON" -m venv venv
 fi
 ./venv/bin/pip install -q -r requirements.txt
 
