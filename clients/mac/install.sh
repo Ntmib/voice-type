@@ -35,7 +35,9 @@ fi
 # ввода, Универсальный доступ) за голым интерпретатором под launchd — TCC
 # выдаёт их только настоящему .app. Applet запускает python как дочерний
 # процесс, и тот наследует разрешения приложения.
-rm -rf "$APP_DIR/VoiceType.app"
+# НЕ пересобирать существующий бандл: новая ad-hoc подпись = новая личность
+# для TCC, и выданные разрешения слетят.
+if [ ! -d "$APP_DIR/VoiceType.app" ]; then
 osacompile -o "$APP_DIR/VoiceType.app" - <<EOF
 do shell script "cd " & quoted form of "$APP_DIR" & " && exec ./venv/bin/python3 -u voice_type.py"
 EOF
@@ -47,6 +49,7 @@ INFO="$APP_DIR/VoiceType.app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$INFO" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'Запись голоса для транскрибации'" "$INFO" 2>/dev/null || true
 codesign --force --deep -s - "$APP_DIR/VoiceType.app"
+fi
 
 # Собираем plist из шаблона: подставляем путь установки
 mkdir -p "$HOME/Library/LaunchAgents"
