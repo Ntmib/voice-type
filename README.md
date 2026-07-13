@@ -222,7 +222,7 @@ nano .env        # VOICETYPE_URL=https://voice.example.com  +  твой токе
 server/          — API сервер (FastAPI + Deepgram + OpenRouter)
 clients/mac/     — Mac-клиент (запись, пилюля-индикатор, install.sh)
 clients/ios/     — Инструкция для Apple Shortcuts
-SPEC.md          — Спецификация проекта
+SPEC.md          — Первоначальная спецификация (исторический документ)
 ```
 
 ## Лицензия
