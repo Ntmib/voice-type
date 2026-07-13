@@ -27,7 +27,7 @@ SPEC.md          — Полная спецификация проекта
 
 - **API**: Python, FastAPI, uvicorn
 - **Транскрибация**: Deepgram Nova-2 (русский, smart_format, пунктуация)
-- **Mac**: pynput (горячая клавиша), pyaudio (запись), pyperclip (буфер)
+- **Mac**: pynput (горячая клавиша), pyaudio (запись), pyperclip (буфер), PyObjC (пилюля-индикатор)
 - **iPhone**: Apple Shortcuts (Record Audio → POST → Copy)
 - **VPS**: systemd + nginx reverse proxy
 - **Безопасность**: Bearer-токен, лимит 25MB
@@ -36,12 +36,18 @@ SPEC.md          — Полная спецификация проекта
 
 Сервер работает на VPS (systemd service `voice-type.service`, порт 8100, nginx proxy на 80).
 
-### Mac — запуск
+### Mac — установка и запуск
 
-Двойной клик по `VoiceType.command` на рабочем столе:
-- Зажать правый Command → диктовать
-- Отпустить → звук Glass = текст в буфере
+Один раз: положить токен в `clients/mac/.env` (`VOICETYPE_TOKEN=...`) и выполнить
+`clients/mac/install.sh` — он ставит зависимости и включает автозапуск (launchd).
+
+Дальше просто:
+- Зажать правый Command → внизу экрана появляется пилюля с живой волной (как у Wispr Flow) — видно, что запись идёт
+- Отпустить → пилюля показывает «обработку», затем «✓ Cmd+V» — текст в буфере
 - Cmd+V для вставки
+
+Проверить визуал без микрофона: `python3 voice_type.py --demo` (прокрутка всех состояний).
+Лог агента: `/tmp/voicetype.log`.
 
 ### iPhone — настройка
 
