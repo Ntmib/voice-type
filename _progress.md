@@ -1,18 +1,21 @@
 # Прогресс: индикатор записи в стиле Wispr Flow
 
-Ветка: claude/wishper-voice-recording-ui-ac7a4d
+Ветка: claude/wishper-voice-recording-ui-ac7a4d (смержена в main локально)
 
 - [x] Исследование Wispr Flow + VoiceInk (open source образец)
-- [x] Разведка окружения Mac: venv python 3.13, PyObjC уже установлен, launchd-агент НЕ установлен, путь в plist неверный, токен зашит в plist
-- [ ] Спецификация docs/superpowers/specs/2026-07-13-recording-overlay-design.md
-- [ ] overlay.py — плавающая пилюля (NSPanel + волна из RMS)
-- [ ] voice_type.py — перестройка: AppKit в главном потоке, pyaudio в callback-режиме
-- [ ] --demo режим для проверки без микрофона
-- [ ] Локальный прогон + скриншот
-- [ ] Починка plist: правильный путь, токен в .env (.gitignore)
-- [ ] install.sh: venv + launchd в один шаг
-- [ ] Установка на Mac, проверка что агент жив
-- [ ] README обновить
-- [ ] Merge в main (локально, без push), напомнить про ротацию токена
+- [x] Спецификация docs/superpowers/specs/2026-07-13-recording-overlay-design.md
+- [x] overlay.py — плавающая пилюля (NSPanel + волна из RMS)
+- [x] voice_type.py — AppKit в главном потоке, pyaudio в callback-режиме
+- [x] --demo режим, прогон без ошибок
+- [x] Токен вынесен в .env, plist-шаблон исправлен
+- [x] install.sh: установка в ~/Library/Application Support/VoiceType
+      (launchd не пускают в ~/Documents), venv на python.org 3.13
+- [x] Агент com.voicetype.agent установлен и запущен
+- [ ] ЖДЁТ ДМИТРИЯ: включить Python в Настройки → Конфиденциальность →
+      Универсальный доступ (иначе правый Cmd не ловится)
+- [ ] ЖДЁТ ДМИТРИЯ: разрешить микрофон при первой записи
+- [ ] Проверка живьём (обычное окно + fullscreen)
+- [ ] Ротация VOICETYPE_TOKEN на VPS (старый засвечен в git-истории)
+- [ ] git push (по команде Дмитрия)
 
 Удалить этот файл по завершении.
