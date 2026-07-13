@@ -40,8 +40,10 @@ osacompile -o "$APP_DIR/VoiceType.app" - <<EOF
 do shell script "cd " & quoted form of "$APP_DIR" & " && exec ./venv/bin/python3 -u voice_type.py"
 EOF
 INFO="$APP_DIR/VoiceType.app/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c "Set :CFBundleName VoiceType" "$INFO"
-/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.voicetype.client" "$INFO"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName VoiceType" "$INFO" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Add :CFBundleName string VoiceType" "$INFO"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.voicetype.client" "$INFO" 2>/dev/null \
+    || /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string com.voicetype.client" "$INFO"
 /usr/libexec/PlistBuddy -c "Add :LSUIElement bool true" "$INFO" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :NSMicrophoneUsageDescription string 'Запись голоса для транскрибации'" "$INFO" 2>/dev/null || true
 codesign --force --deep -s - "$APP_DIR/VoiceType.app"
