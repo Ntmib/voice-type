@@ -1,6 +1,12 @@
 __pycache__/
 *.pyc
+
+# Working environment files; tracked templates stay allowed.
 .env
+.env.*
+clients/mac/.env
+server/.env
+!.env.example
 venv/
 .venv/
 *.egg-info/
